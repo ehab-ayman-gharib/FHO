@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { bootstrapCameraKit, createMediaStreamSource, Transform2D, createImageSource, createVideoSource } from '@snap/camera-kit';
+import { bootstrapCameraKit, createMediaStreamSource, Transform2D } from '@snap/camera-kit';
 import { CAMERAKIT_CONFIG } from '../config/camerakit';
 
 export const CameraKitWrapper = () => {
@@ -12,12 +12,10 @@ export const CameraKitWrapper = () => {
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     // Camera State
-    const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
     const [isSessionReady, setIsSessionReady] = useState(false);
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
     const [currentLensId, setCurrentLensId] = useState<string>(CAMERAKIT_CONFIG.DEFAULT_LENS_ID);
     const [showFlash, setShowFlash] = useState(false);
-    const [isUsingCamera, setIsUsingCamera] = useState(true);
     const [isRecording, setIsRecording] = useState(false);
     const [recordedVideoUrl, setRecordedVideoUrl] = useState<string | null>(null);
     //@ts-ignore
@@ -25,7 +23,6 @@ export const CameraKitWrapper = () => {
         const params = new URLSearchParams(window.location.search);
         return params.get('birthdate') || '70';
     });
-    const fileInputRef = useRef<HTMLInputElement>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const recordingChunksRef = useRef<Blob[]>([]);
     const holdTimerRef = useRef<any>(null);
@@ -48,106 +45,8 @@ export const CameraKitWrapper = () => {
         console.log('Selected lens:', lensId);
         setCurrentLensId(lensId);
     };
-    // Handle camera flip
-    const handleFlipCamera = () => {
-        setIsUsingCamera(true);
-        setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
-    };
 
-    // Handle Gallery selection
-    const handleGalleryClick = () => {
-        fileInputRef.current?.click();
-    };
 
-    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file || !sessionRef.current) return;
-
-        setIsUsingCamera(false);
-        setIsLoading(true);
-
-        try {
-            // Stop previous camera stream if it exists
-            if (streamRef.current) {
-                streamRef.current.getTracks().forEach(track => track.stop());
-                streamRef.current = null;
-            }
-
-            const url = URL.createObjectURL(file);
-
-            if (file.type.startsWith('image/')) {
-                const img = new Image();
-                img.crossOrigin = "anonymous";
-                img.src = url;
-
-                await new Promise((resolve, reject) => {
-                    img.onload = resolve;
-                    img.onerror = reject;
-                });
-
-                const imageSource = await createImageSource(img);
-                await sessionRef.current.setSource(imageSource.copy());
-                await sessionRef.current.play();
-
-            } else if (file.type.startsWith('video/')) {
-                const video = document.createElement('video');
-                // Set these BEFORE src for better mobile compatibility
-                video.muted = true;
-                video.loop = true;
-                video.playsInline = true;
-                (video as any).webkitPlaysInline = true; // For older iOS browsers
-                video.crossOrigin = "anonymous";
-                video.src = url;
-
-                await new Promise((resolve, reject) => {
-                    // canplaythrough is more reliable for mobile to ensure enough data is buffered
-                    video.oncanplaythrough = resolve;
-                    video.onloadedmetadata = () => {
-                        // Ensure dimensions are captured as soon as they are available
-                        resolve(null);
-                    };
-                    video.onerror = (e) => {
-                        console.error('Video element error:', e);
-                        reject(new Error('Failed to load video file'));
-                    };
-
-                    // Cleanup timeout for mobile
-                    setTimeout(() => resolve(null), 5000);
-                });
-
-                // Optimization for mobile: scale down high-res videos
-                const MAX_DIMENSION = 1280;
-                if (video.videoWidth > 0 && (video.videoWidth > MAX_DIMENSION || video.videoHeight > MAX_DIMENSION)) {
-                    const scale = MAX_DIMENSION / Math.max(video.videoWidth, video.videoHeight);
-                    video.width = video.videoWidth * scale;
-                    video.height = video.videoHeight * scale;
-                } else if (video.videoWidth > 0) {
-                    video.width = video.videoWidth;
-                    video.height = video.videoHeight;
-                }
-
-                // Attempt to play, catching potential autoplay errors
-                try {
-                    await video.play();
-                } catch (e) {
-                    console.warn('Autoplay prevented, retrying after interaction if needed', e);
-                }
-
-                const videoSource = createVideoSource(video);
-                await sessionRef.current.setSource(videoSource.copy());
-                await sessionRef.current.play();
-            } else {
-                throw new Error('Unsupported file type');
-            }
-
-            setIsLoading(false);
-        } catch (err: any) {
-            console.error('Gallery Error:', err);
-            setError(err.message || 'Failed to load gallery media');
-            setIsLoading(false);
-            setIsUsingCamera(true); // Revert to camera on error
-        }
-    };
     // Handle take photo / record video
     const handleShutterDown = () => {
         // Start a timer to detect long press (hold)
@@ -295,7 +194,7 @@ export const CameraKitWrapper = () => {
     }, []);
     // Camera Stream Effect
     useEffect(() => {
-        if (!isSessionReady || !sessionRef.current || !isUsingCamera) return;
+        if (!isSessionReady || !sessionRef.current) return;
         let isMounted = true;
         // Initialize Camera Stream
         const initStream = async () => {
@@ -306,7 +205,7 @@ export const CameraKitWrapper = () => {
                 }
 
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: facingMode }
+                    video: { facingMode: 'user' }
                 });
 
                 if (!isMounted) {
@@ -317,8 +216,8 @@ export const CameraKitWrapper = () => {
                 streamRef.current = stream;
 
                 const source = createMediaStreamSource(stream, {
-                    transform: facingMode === 'user' ? Transform2D.MirrorX : undefined,
-                    cameraType: facingMode
+                    transform: Transform2D.MirrorX,
+                    cameraType: 'user'
                 });
 
                 await sessionRef.current.setSource(source);
@@ -333,6 +232,8 @@ export const CameraKitWrapper = () => {
             }
         };
 
+
+
         initStream();
         // Cleanup on unmount
         return () => {
@@ -342,7 +243,7 @@ export const CameraKitWrapper = () => {
                 streamRef.current.getTracks().forEach(track => track.stop());
             }
         };
-    }, [facingMode, isSessionReady, isUsingCamera]);
+    }, [isSessionReady]);
     // Lens Apply Effect, this effect is responsible for applying the lens to the camera stream
     useEffect(() => {
         if (!isSessionReady || !cameraKitRef.current || !sessionRef.current) return;
@@ -447,17 +348,8 @@ export const CameraKitWrapper = () => {
             {/* UI Overlay */}
             {(!capturedImage && !recordedVideoUrl) ? (
                 <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-5 z-10 font-sans">
-                    {/* Top Bar */}
+                    {/* Top Bar - Hidden/Empty as flip camera is removed */}
                     <div className="flex justify-end pt-2.5 pointer-events-auto">
-                        <button
-                            className="w-12 h-12 p-0 rounded-full bg-black/40 backdrop-blur-md border-none flex items-center justify-center text-white cursor-pointer transition-all active:scale-95"
-                            aria-label="Flip Camera"
-                            onClick={handleFlipCamera}
-                        >
-                            <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
-                                <path d="M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 11.5V13H9v2.5L5.5 12 9 8.5V11h6V8.5l3.5 3.5-3.5 3.5z" />
-                            </svg>
-                        </button>
                     </div>
 
                     {/* Bottom Controls */}
@@ -469,15 +361,7 @@ export const CameraKitWrapper = () => {
                         )}
 
                         <div className="grid grid-cols-[1fr_auto_1fr] items-center w-full max-w-[440px] px-5 gap-5">
-                            <button
-                                className="w-12 h-12 p-0 rounded-full bg-black/40 backdrop-blur-md border-none flex items-center justify-center text-white cursor-pointer transition-all active:scale-95"
-                                aria-label="Gallery"
-                                onClick={handleGalleryClick}
-                            >
-                                <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
-                                    <path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z" />
-                                </svg>
-                            </button>
+                            <div className="w-full" />
 
                             <button
                                 className={`relative w-[76px] h-[76px] p-0 rounded-full border-[3px] flex items-center justify-center cursor-pointer transition-all duration-200 backdrop-blur-[2px] active:scale-90 ${isRecording ? 'border-red-500 bg-red-500/20 shadow-[0_0_0_8px_rgba(255,75,43,0.3)] animate-recordingRipple' : 'border-white/90 bg-white/10 after:content-[""] after:absolute after:inset-0 after:border-2 after:border-white/80 after:rounded-full after:animate-idleRipple'
@@ -495,15 +379,6 @@ export const CameraKitWrapper = () => {
                             <div className="w-full" />
                         </div>
                     </div>
-
-                    {/* Hidden File Input */}
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/*,video/*"
-                        onChange={handleFileChange}
-                    />
                 </div>
             ) : null}
         </div>
