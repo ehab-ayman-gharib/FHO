@@ -20,6 +20,10 @@ export const CameraKitWrapper = () => {
     const [isUsingCamera, setIsUsingCamera] = useState(true);
     const [isRecording, setIsRecording] = useState(false);
     const [recordedVideoUrl, setRecordedVideoUrl] = useState<string | null>(null);
+    const [birthDate, setBirthDate] = useState<string>(() => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('birthdate') || '70';
+    });
     const fileInputRef = useRef<HTMLInputElement>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const recordingChunksRef = useRef<Blob[]>([]);
@@ -360,8 +364,12 @@ export const CameraKitWrapper = () => {
 
                 if (!isMounted) return;
 
-                console.log('Applying lens:', currentLensId);
-                await sessionRef.current.applyLens(lens);
+                console.log('Applying lens:', currentLensId, 'with birthDate:', birthDate);
+                await sessionRef.current.applyLens(lens, {
+                    launchParams: {
+                        birthDate: birthDate
+                    }
+                });
                 console.log('Lens applied successfully:', currentLensId);
 
                 // Hide loader after lens is applied
@@ -381,7 +389,7 @@ export const CameraKitWrapper = () => {
         return () => {
             isMounted = false;
         };
-    }, [currentLensId, isSessionReady]);
+    }, [currentLensId, isSessionReady, birthDate]);
     // Error Handling 
     if (error) {
         return (
@@ -458,6 +466,7 @@ export const CameraKitWrapper = () => {
                                 REC
                             </div>
                         )}
+
                         <div className="grid grid-cols-[1fr_auto_1fr] items-center w-full max-w-[440px] px-5 gap-5">
                             <button
                                 className="w-12 h-12 p-0 rounded-full bg-black/40 backdrop-blur-md border-none flex items-center justify-center text-white cursor-pointer transition-all active:scale-95"
