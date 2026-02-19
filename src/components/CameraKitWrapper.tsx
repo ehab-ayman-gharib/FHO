@@ -20,6 +20,7 @@ export const CameraKitWrapper = () => {
     const [isUsingCamera, setIsUsingCamera] = useState(true);
     const [isRecording, setIsRecording] = useState(false);
     const [recordedVideoUrl, setRecordedVideoUrl] = useState<string | null>(null);
+    //@ts-ignore
     const [birthDate, setBirthDate] = useState<string>(() => {
         const params = new URLSearchParams(window.location.search);
         return params.get('birthdate') || '70';
