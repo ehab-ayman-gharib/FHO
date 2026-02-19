@@ -364,7 +364,7 @@ export const CameraKitWrapper = () => {
                             <div className="w-full" />
 
                             <button
-                                className={`relative w-[76px] h-[76px] p-0 rounded-full border-[3px] flex items-center justify-center cursor-pointer transition-all duration-200 backdrop-blur-[2px] active:scale-90 ${isRecording ? 'border-red-500 bg-red-500/20 shadow-[0_0_0_8px_rgba(255,75,43,0.3)] animate-recordingRipple' : 'border-white/90 bg-white/10 after:content-[""] after:absolute after:inset-0 after:border-2 after:border-white/80 after:rounded-full after:animate-idleRipple'
+                                className={`hidden relative w-[76px] h-[76px] p-0 rounded-full border-[3px] flex items-center justify-center cursor-pointer transition-all duration-200 backdrop-blur-[2px] active:scale-90 ${isRecording ? 'border-red-500 bg-red-500/20 shadow-[0_0_0_8px_rgba(255,75,43,0.3)] animate-recordingRipple' : 'border-white/90 bg-white/10 after:content-[""] after:absolute after:inset-0 after:border-2 after:border-white/80 after:rounded-full after:animate-idleRipple'
                                     }`}
                                 aria-label="Take Photo or Record"
                                 onMouseDown={handleShutterDown}
