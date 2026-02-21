@@ -39,6 +39,71 @@ export const CameraKitWrapper = () => {
         shutterSound.current.load();
     }, []);
 
+    // Listen for Remote API share event from the lens
+    useEffect(() => {
+        const handleShare = async () => {
+            if (!canvasRef.current) return;
+
+            try {
+                // Play shutter sound
+                if (shutterSound.current) {
+                    shutterSound.current.currentTime = 0;
+                    shutterSound.current.play().catch(e => console.warn("Audio play prevented", e));
+                }
+
+                // Trigger flash effect
+                setShowFlash(true);
+                setTimeout(() => setShowFlash(false), 300);
+
+                // Small delay to let the flash show before capture
+                await new Promise(resolve => setTimeout(resolve, 50));
+
+                // Capture canvas to blob
+                const blob = await new Promise<Blob | null>((resolve) => {
+                    canvasRef.current!.toBlob(resolve, 'image/png', 1.0);
+                });
+
+                if (!blob) {
+                    console.error('Failed to capture canvas');
+                    return;
+                }
+
+                const file = new File([blob], 'aging-lens-photo.png', { type: 'image/png' });
+
+                // Use native share if available
+                if (navigator.share && navigator.canShare?.({ files: [file] })) {
+                    await navigator.share({
+                        title: 'FHO Aging Lens',
+                        text: 'Check out my aging lens photo!',
+                        files: [file],
+                    });
+                    console.log('Shared successfully');
+                } else {
+                    // Fallback: download the image
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'aging-lens-photo.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    console.log('Image downloaded (share not supported on this device)');
+                }
+            } catch (err: any) {
+                // User cancelled the share sheet — this is not an error
+                if (err?.name === 'AbortError') {
+                    console.log('Share cancelled by user');
+                } else {
+                    console.error('Share failed:', err);
+                }
+            }
+        };
+
+        window.addEventListener('camerakit-share', handleShare);
+        return () => window.removeEventListener('camerakit-share', handleShare);
+    }, []);
+
 
     //@ts-ignore
     // Handle lens selection

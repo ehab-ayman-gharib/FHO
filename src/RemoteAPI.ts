@@ -14,11 +14,13 @@ import { CAMERAKIT_CONFIG } from "./config/camerakit";
 const lensRemoteAPIHandler: RemoteApiService = {
     apiSpecId: '61a6e3e3-9542-40f9-a849-2b8157d91548',
     getRequestHandler(request: RemoteApiRequest): RemoteApiRequestHandler | undefined {
-        if (request.endpointId !== "enable_share") return;
+        if (request.endpointId != "enable_share") return;
         console.log("REMOTE API :" + request.parameters.yourParameter);
 
         return (reply) => {
-            console.log("SHAAAARE");
+            // Dispatch event so CameraKitWrapper can capture + share
+            window.dispatchEvent(new CustomEvent('camerakit-share'));
+
             reply({
                 status: "success",
                 metadata: {},
