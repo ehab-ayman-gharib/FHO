@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { bootstrapCameraKit, createMediaStreamSource, Transform2D } from '@snap/camera-kit';
+import { createMediaStreamSource, Transform2D } from '@snap/camera-kit';
 import { CAMERAKIT_CONFIG } from '../config/camerakit';
+import { bootstrapCameraKitWithRemoteAPI } from '../RemoteAPI';
 
 export const CameraKitWrapper = () => {
     // Refs and State
@@ -152,7 +153,7 @@ export const CameraKitWrapper = () => {
                     return;
                 }
 
-                const cameraKit = await bootstrapCameraKit({ apiToken });
+                const cameraKit = await bootstrapCameraKitWithRemoteAPI();
                 cameraKitRef.current = cameraKit;
                 if (!isMounted) return;
 
