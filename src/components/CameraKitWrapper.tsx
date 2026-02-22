@@ -22,7 +22,7 @@ export const CameraKitWrapper = () => {
     //@ts-ignore
     const [birthDate, setBirthDate] = useState<string>(() => {
         const params = new URLSearchParams(window.location.search);
-        return params.get('birthdate') || '70';
+        return params.get('birthdate') || '';
     });
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const recordingChunksRef = useRef<Blob[]>([]);
@@ -68,13 +68,15 @@ export const CameraKitWrapper = () => {
                     return;
                 }
 
-                const file = new File([blob], 'aging-lens-photo.png', { type: 'image/png' });
+                const timestamp = Date.now();
+                const fileName = `FHO-Aging-Lens-${timestamp}.png`;
+                const file = new File([blob], fileName, { type: 'image/png' });
 
                 // Use native share if available
                 if (navigator.share && navigator.canShare?.({ files: [file] })) {
                     await navigator.share({
                         title: 'FHO Aging Lens',
-                        text: 'Check out my aging lens photo!',
+                        text: '',
                         files: [file],
                     });
                     console.log('Shared successfully');
@@ -83,7 +85,7 @@ export const CameraKitWrapper = () => {
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = 'aging-lens-photo.png';
+                    a.download = fileName;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
