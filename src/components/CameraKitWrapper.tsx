@@ -15,7 +15,19 @@ export const CameraKitWrapper = () => {
     // Camera State
     const [isSessionReady, setIsSessionReady] = useState(false);
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
-    const [currentLensId, setCurrentLensId] = useState<string>(CAMERAKIT_CONFIG.DEFAULT_LENS_ID);
+    const [currentLensId, setCurrentLensId] = useState<string>(() => {
+        const params = new URLSearchParams(window.location.search);
+        const idParam = params.get('id');
+
+        if (idParam !== null) {
+            const index = parseInt(idParam, 10);
+            if (!isNaN(index) && index >= 0 && index < CAMERAKIT_CONFIG.LENS_IDS.length) {
+                return CAMERAKIT_CONFIG.LENS_IDS[index];
+            }
+        }
+
+        return CAMERAKIT_CONFIG.DEFAULT_LENS_ID;
+    });
     const [showFlash, setShowFlash] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [recordedVideoUrl, setRecordedVideoUrl] = useState<string | null>(null);
