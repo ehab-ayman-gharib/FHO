@@ -5,7 +5,7 @@ export const CAMERAKIT_CONFIG = {
     DEFAULT_LENS_ID: '74d2ba9f-40a4-47d8-927f-e171fffcfbce',
     LENS_IDS: [
         '74d2ba9f-40a4-47d8-927f-e171fffcfbce', // First lens
-        '7411ad36-5b0c-48fa-9de1-197fa1390e23',//Second lens
+        'b5597b48-8624-4efb-bdab-116ad53fb266',//Second lens
         // Add more lens IDs here
     ]
 };
