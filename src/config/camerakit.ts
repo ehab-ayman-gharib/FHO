@@ -4,8 +4,10 @@ export const CAMERAKIT_CONFIG = {
     GROUP_ID: '8472f63b-d32e-408d-9387-213cc847170e',
     DEFAULT_LENS_ID: '74d2ba9f-40a4-47d8-927f-e171fffcfbce',
     LENS_IDS: [
-        '74d2ba9f-40a4-47d8-927f-e171fffcfbce', // First lens
-        'b5597b48-8624-4efb-bdab-116ad53fb266',//Second lens
+        '549298f5-09ea-4f19-8c98-e7be91bce5a7', // First lens
+        '3092165f-b9ea-4cd1-adec-089d164bd211',//Second lens,
+        '74d2ba9f-40a4-47d8-927f-e171fffcfbce', //Third lens
+        'b5597b48-8624-4efb-bdab-116ad53fb266',//Fourth lens
         // Add more lens IDs here
     ]
 };
