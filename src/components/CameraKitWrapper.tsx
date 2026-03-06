@@ -34,7 +34,7 @@ export const CameraKitWrapper = () => {
     //@ts-ignore
     const [birthDate, setBirthDate] = useState<string>(() => {
         const params = new URLSearchParams(window.location.search);
-        return params.get('birthdate') || '';
+        return params.get('age') || '';
     });
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const recordingChunksRef = useRef<Blob[]>([]);
