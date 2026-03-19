@@ -12,7 +12,7 @@ import { CAMERAKIT_CONFIG } from "./config/camerakit";
 
 
 const lensRemoteAPIHandler: RemoteApiService = {
-    apiSpecId: '61a6e3e3-9542-40f9-a849-2b8157d91548',
+    apiSpecId: CAMERAKIT_CONFIG.API_SPEC_ID,
     getRequestHandler(request: RemoteApiRequest): RemoteApiRequestHandler | undefined {
         if (request.endpointId != "enable_share") return;
         console.log("REMOTE API :" + request.parameters.yourParameter);
